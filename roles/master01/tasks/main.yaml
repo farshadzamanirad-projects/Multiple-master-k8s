@@ -1,0 +1,43 @@
+---
+- name: Initialize the Kubernetes cluster using kubeadm
+  command: kubeadm init --control-plane-endpoint={{ hostvars['lb'].ansible_host }}:6443 --upload-certs --apiserver-advertise-address="{{ ansible_host }}" --pod-network-cidr={{ podnetcidr }}
+
+- name: Setup kubeconfig for vagrant user
+  command: "{{ item }}"
+  with_items:
+   - mkdir -p /root/.kube
+   - cp -i /etc/kubernetes/admin.conf /root/.kube/config
+
+- name: Generate Worker node join command
+  command: kubeadm token create --print-join-command
+  register: join_command
+- name: Generate Master node join command  
+  shell: echo $(kubeadm token create --certificate-key `kubeadm init phase upload-certs --upload-certs 2>/dev/null | awk 'NR>2 {print $1}'` --print-join-command 2>/dev/null)
+  register: joinm_command
+
+
+- name: define a dummy host!
+  add_host:
+    name: "taghtaghoo"
+    kubermand: "{{ join_command.stdout }}"
+    kubermast: "{{ joinm_command.stdout }}"
+
+- name: touch the file if its not exist
+  file:
+    path: "/etc/default/kubelet"
+    state: touch
+- name: create rule for "/etc/default/kubelet"
+  lineinfile:
+    path: /etc/default/kubelet
+    line: KUBELET_EXTRA_ARGS=--node-ip="{{ ansible_host }}"
+  notify: kubelet restart
+   
+
+- name: Download Helm3
+  get_url:
+    url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+    dest: /root/gethelm3.sh
+    mode: '0777'
+
+- name: install Helm3
+  command: /root/gethelm3.sh

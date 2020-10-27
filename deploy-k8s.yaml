@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  roles:
+    - infra
+
+- hosts: all
+  roles:
+    - prereq
+    
+- hosts: masters:workers
+  roles:
+    - dockubebinaries
+
+- hosts: loadbalancer
+  roles:
+    - loadbalancer
+
+- hosts: m1
+  roles:
+    - master01
+
+- hosts: masters:!m1
+  roles:
+    - masters
+
+- hosts: workers
+  roles:
+    - workers
+
+- hosts: m1
+  roles:
+    - network

@@ -1,0 +1,42 @@
+- name: Install calico pod network
+  command: kubectl create -f https://docs.projectcalico.org/manifests/calico.yaml
+
+- name: add nginx-ingress repo
+  command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx/
+
+- name: install nginx-ingress
+  command: helm install nginx-ingress ingress-nginx/ingress-nginx -n kube-system
+
+- name: Fetch ingress-nginx-controller svc to a file
+  shell: kubectl get svc nginx-ingress-ingress-nginx-controller -n kube-system -o yaml > /root/nginxingressvc.yaml
+
+- name: add metallb shared ip annotation to nginx ingress service
+  lineinfile:
+    dest: /root/nginxingressvc.yaml
+    insertafter: '  annotations:'
+    line: "    metallb.universe.tf/allow-shared-ip: shared"
+
+- name: recreate nginx ingress svc with new shared ip 
+  command: kubectl apply -f /root/nginxingressvc.yaml
+
+- name: Change kube-proxy
+  shell: >
+    kubectl get configmap kube-proxy -n kube-system -o yaml | sed -e 's/strictARP\: false/strictARP: true/' | kubectl apply -f - -n kube-system
+
+- name: Install metallb NS
+  command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/namespace.yaml
+
+- name: Install metallb manifest 
+  command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.3/manifests/metallb.yaml
+
+- name: Install metallb memberlist secret
+  shell: kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+
+- name: Creating Config Map manifest for metallb
+  template:
+    src: metallbcm.yaml.j2
+    dest: /root/metallbconfigmap.yaml
+    mode: '0644'
+
+- name: Install metallb cinfig Map
+  command: kubectl apply -f  /root/metallbconfigmap.yaml

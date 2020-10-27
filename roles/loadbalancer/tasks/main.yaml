@@ -1,0 +1,15 @@
+- name: install the latest version of ha-proxy
+  package:
+    name:
+      - haproxy
+    state: latest
+
+
+- set_fact:
+    ha_additional_config: "{{ lookup('template', 'ha.j2') }}"
+
+- blockinfile:
+    dest: /etc/haproxy/haproxy.cfg
+    content: '{{ ha_additional_config }}'
+    state: present
+  notify: haproxy restart

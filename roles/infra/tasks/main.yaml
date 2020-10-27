@@ -1,0 +1,5 @@
+- name: forced-destroy exisiting vagrant-machines 
+  shell: vagrant destroy -f
+
+- name: fireup machines!
+  shell: vagrant up

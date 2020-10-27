@@ -1,0 +1,12 @@
+[loadbalancer]
+lb ansible_host=192.168.56.100 ansible_user=root ansible_password=123 sethostnameto=k8s-lb.gwf.me
+
+[masters]
+m1 ansible_host=192.168.56.101 ansible_user=root ansible_password=123 sethostnameto=k8s-master01.gwf.me podnetcidr=172.16.0.0/16 lbfloatingipaddress=192.168.56.144/32
+m2 ansible_host=192.168.56.102 ansible_user=root ansible_password=123 sethostnameto=k8s-master02.gwf.me
+m3 ansible_host=192.168.56.103 ansible_user=root ansible_password=123 sethostnameto=k8s-master03.gwf.me
+
+[workers]
+w1 ansible_host=192.168.56.201 ansible_user=root ansible_password=123 sethostnameto=k8s-wn01.gwf.me
+w2 ansible_host=192.168.56.202 ansible_user=root ansible_password=123 sethostnameto=k8s-wn02.gwf.me
+w3 ansible_host=192.168.56.203 ansible_user=root ansible_password=123 sethostnameto=k8s-wn03.gwf.me

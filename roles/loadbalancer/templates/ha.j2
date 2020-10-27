@@ -1,0 +1,14 @@
+#jinja2: trim_blocks:False
+frontend kubernetes-frontend
+    bind {{ hostvars['lb'].ansible_host }}:6443
+    mode tcp
+    option tcplog
+    default_backend kubernetes-backend
+
+backend kubernetes-backend
+    mode tcp
+    option tcp-check
+    balance roundrobin
+{% for i in groups['masters'] %}
+    server {{ hostvars[i].sethostnameto }} {{ hostvars[i].ansible_host }}:6443 fall 3 rise 2
+{%- endfor %}

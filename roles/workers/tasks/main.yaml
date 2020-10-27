@@ -1,0 +1,18 @@
+---
+- name: Copy join command to local file
+  copy:
+    content: "{{ hostvars['taghtaghoo']['kubermand'] }}" 
+    dest: "/root/join-command-workermode.sh"
+    mode: 777
+- name: Join the workernode
+  command: sh "/root/join-command-workermode.sh"
+
+- name: touch the file if its not exist
+  file:
+    path: "/etc/default/kubelet"
+    state: touch
+- name: create rule for "/etc/default/kubelet"
+  lineinfile:
+    path: /etc/default/kubelet
+    line: KUBELET_EXTRA_ARGS=--node-ip="{{ ansible_host }}"
+  notify: kubelet restart
